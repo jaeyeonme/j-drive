@@ -1,0 +1,69 @@
+name: J-Drive CI/CD
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'main'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Test with Gradle
+        run: ./gradlew test
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Deploy to S3
+        run: |
+          JAR_VERSION=$(git rev-parse --short HEAD)
+          aws s3 cp ./build/libs/j-drive.jar "s3://${{ secrets.S3_BUCKET_NAME }}/j-drive-${JAR_VERSION}.jar"
+          aws s3 cp "s3://${{ secrets.S3_BUCKET_NAME }}/j-drive-${JAR_VERSION}.jar" "s3://${{ secrets.S3_BUCKET_NAME }}/j-drive-latest.jar"
+
+      - name: Verify Deployment
+        run: |
+          aws s3api head-object --bucket ${{ secrets.S3_BUCKET_NAME }} --key j-drive-latest.jar
