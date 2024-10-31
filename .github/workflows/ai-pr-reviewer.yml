@@ -30,11 +30,10 @@ jobs:
           review_comment_lgtm: false
           openai_light_model: gpt-3.5-turbo
           openai_heavy_model: gpt-4
-          language: ko-KR                        # 한국어로 설정
-          path_filters: |                        # 관련 PR 찾기 위한 경로 설정
+          language: ko-KR
+          path_filters: |
             !dist/**
             !**/*.lock
             !**/generated/**
-            src/**/*.{ts,js,tsx,jsx}
-            packages/**/*.{ts,js,tsx,jsx}
+            **/*
           summarize: true
