@@ -20,10 +20,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -40,10 +40,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -60,13 +60,10 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          # Add version tag based on commit SHA
           JAR_VERSION=$(git rev-parse --short HEAD)
           aws s3 cp ./build/libs/j-drive.jar "s3://${{ secrets.S3_BUCKET_NAME }}/j-drive-${JAR_VERSION}.jar"
-          # Keep latest version
           aws s3 cp "s3://${{ secrets.S3_BUCKET_NAME }}/j-drive-${JAR_VERSION}.jar" "s3://${{ secrets.S3_BUCKET_NAME }}/j-drive-latest.jar"
 
       - name: Verify Deployment
         run: |
-          # Verify file exists in S3
           aws s3api head-object --bucket ${{ secrets.S3_BUCKET_NAME }} --key j-drive-latest.jar
