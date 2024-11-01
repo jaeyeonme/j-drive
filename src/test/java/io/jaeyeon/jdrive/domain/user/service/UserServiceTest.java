@@ -3,6 +3,7 @@ package io.jaeyeon.jdrive.domain.user.service;
 import static org.mockito.ArgumentMatchers.any;
 
 import io.jaeyeon.jdrive.domain.user.domain.User;
+import io.jaeyeon.jdrive.domain.user.dto.request.LoginRequest;
 import io.jaeyeon.jdrive.domain.user.dto.request.SignupRequest;
 import io.jaeyeon.jdrive.domain.user.dto.response.TokenResponse;
 import io.jaeyeon.jdrive.domain.user.repository.UserRepository;
@@ -15,6 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,5 +72,43 @@ class UserServiceTest {
         // When & Then
         assertThrows(BusinessException.class, () -> userService.signup(signupRequest));
     }
-  
+
+    @Test
+    @DisplayName("로그인 성공")
+    void login_success() {
+        // given
+        LoginRequest request = new LoginRequest("test@example.com", "password123");
+        User user = User.createUser(
+                request.email(),
+                request.password(),
+                "TestUser",
+                passwordEncoder
+        );
+
+        given(userRepository.findByEmail(request.email())).willReturn(Optional.of(user));
+        given(passwordEncoder.matches(request.password(), user.getPassword())).willReturn(true);
+        given(jwtTokenProvider.createAccessToken(user)).willReturn("accessToken");
+        given(jwtTokenProvider.createRefreshToken(user)).willReturn("refreshToken");
+
+        // when
+        TokenResponse response = userService.login(request);
+
+        // then
+        assertThat(response.accessToken()).isEqualTo("accessToken");
+        assertThat(response.refreshToken()).isEqualTo("refreshToken");
+        verify(userRepository).findByEmail(request.email());
+        verify(passwordEncoder).matches(request.password(), user.getPassword());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 이메일로 로그인 시도")
+    void login_userNotFound() {
+        // given
+        LoginRequest request = new LoginRequest("test@example.com", "password123");
+        given(userRepository.findByEmail(request.email())).willReturn(Optional.empty());
+
+        // when & then
+        assertThrows(BusinessException.class, () -> userService.login(request));
+        verify(userRepository).findByEmail(request.email());
+    }
 }

@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -38,12 +40,12 @@ public class UserService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        validatePassword(user, user.getPassword());
+        validatePassword(user, request.password());
         return createTokens(user);
     }
 
-    private void validatePassword(User user, String password) {
-        if (!user.matchesPassword(password, passwordEncoder)) {
+    private void validatePassword(User user, String rawPassword) {
+        if (!user.matchesPassword(rawPassword, passwordEncoder)) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         }
     }
