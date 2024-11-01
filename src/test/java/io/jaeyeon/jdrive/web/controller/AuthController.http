@@ -1,0 +1,72 @@
+### 환경 변수 설정
+@host = http://localhost:8080
+@contentType = application/json
+
+### 회원가입
+POST {{host}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+ "email": "test@example.com",
+ "password": "password123",
+ "name": "Jaeyeon"
+}
+
+> {%
+    if (response.status === 200) {
+        client.global.set("access_token", response.body.accessToken);
+        client.global.set("refresh_token", response.body.refreshToken);
+        client.log("Tokens saved from signup");
+    }
+%}
+
+### 로그인
+POST {{host}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+ "email": "test@example.com",
+ "password": "password123"
+}
+
+> {%
+    if (response.status === 200) {
+        client.global.set("access_token", response.body.accessToken);
+        client.global.set("refresh_token", response.body.refreshToken);
+        client.log("Tokens saved from login");
+    }
+%}
+
+### 내 정보 조회
+GET {{host}}/api/users/me
+Authorization: Bearer {{access_token}}
+
+### 회원 정보 수정 - 이름만 변경
+PATCH {{host}}/api/users/me
+Authorization: Bearer {{access_token}}
+Content-Type: {{contentType}}
+
+{
+ "name": "새이름"
+}
+
+### 회원 정보 수정 - 비밀번호만 변경
+PATCH {{host}}/api/users/me
+Authorization: Bearer {{access_token}}
+Content-Type: {{contentType}}
+
+{
+ "currentPassword": "password123",
+ "newPassword": "newPassword123"
+}
+
+### 회원 정보 수정 - 이름과 비밀번호 모두 변경
+PATCH {{host}}/api/users/me
+Authorization: Bearer {{access_token}}
+Content-Type: {{contentType}}
+
+{
+ "name": "새이름",
+ "currentPassword": "password123",
+ "newPassword": "newPassword123"
+}

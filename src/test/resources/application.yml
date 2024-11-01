@@ -1,0 +1,30 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.type: trace
+
+jwt:
+  access-token:
+    expire-time: 1800000
+  refresh-token:
+    expire-time: 604800000
+  secret: test_secret_key_for_jwt_token_please_change_in_production
