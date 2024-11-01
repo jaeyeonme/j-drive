@@ -5,7 +5,9 @@ import static org.mockito.ArgumentMatchers.any;
 import io.jaeyeon.jdrive.domain.user.domain.User;
 import io.jaeyeon.jdrive.domain.user.dto.request.LoginRequest;
 import io.jaeyeon.jdrive.domain.user.dto.request.SignupRequest;
+import io.jaeyeon.jdrive.domain.user.dto.request.UserUpdateRequest;
 import io.jaeyeon.jdrive.domain.user.dto.response.TokenResponse;
+import io.jaeyeon.jdrive.domain.user.dto.response.UserResponse;
 import io.jaeyeon.jdrive.domain.user.repository.UserRepository;
 import io.jaeyeon.jdrive.global.error.exception.BusinessException;
 import io.jaeyeon.jdrive.global.security.jwt.JwtTokenProvider;
@@ -21,6 +23,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -110,5 +113,69 @@ class UserServiceTest {
         // when & then
         assertThrows(BusinessException.class, () -> userService.login(request));
         verify(userRepository).findByEmail(request.email());
+    }
+
+    @Test
+    @DisplayName("내 정보 조회 성공")
+    void getMyInfo_success() {
+        // given
+        Long userId = 1L;
+        User user = User.builder()
+                .email("test@example.com")
+                .password("encodedPassword")
+                .name("TestUser")
+                .build();
+
+        given(userRepository.findById(userId))
+                .willReturn(Optional.of(user));
+
+        // when
+        UserResponse response = userService.getMyInfo(userId);
+
+        // then
+        assertThat(response.email()).isEqualTo(user.getEmail());
+        assertThat(response.name()).isEqualTo(user.getName());
+        verify(userRepository).findById(userId);
+    }
+
+    @Test
+    @DisplayName("회원 정보 수정 성공")
+    void updateMyInfo_success() {
+        // given
+        String currentPassword = "password123";
+        String encodedPassword = "encodedPassword";
+        String newPassword = "newPassword123";
+        String newEncodedPassword = "newEncodedPassword";
+
+        Long userId = 1L;
+        User user = User.builder()
+                .email("test@example.com")
+                .password(encodedPassword)
+                .name("TestUser")
+                .build();
+
+        UserUpdateRequest request = new UserUpdateRequest(
+                "NewName",
+                currentPassword,
+                newPassword
+        );
+
+        given(userRepository.findById(userId))
+                .willReturn(Optional.of(user));
+
+        given(passwordEncoder.matches(currentPassword, encodedPassword))
+                .willReturn(true);
+
+        given(passwordEncoder.encode(newPassword))
+                .willReturn(newEncodedPassword);
+
+        // when
+        UserResponse response = userService.updateMyInfo(userId, request);
+
+        // then
+        assertThat(response.name()).isEqualTo(request.name());
+        verify(userRepository).findById(userId);
+        verify(passwordEncoder).matches(currentPassword, encodedPassword);
+        verify(passwordEncoder).encode(newPassword);
     }
 }

@@ -3,7 +3,9 @@ package io.jaeyeon.jdrive.domain.user.service;
 import io.jaeyeon.jdrive.domain.user.domain.User;
 import io.jaeyeon.jdrive.domain.user.dto.request.LoginRequest;
 import io.jaeyeon.jdrive.domain.user.dto.request.SignupRequest;
+import io.jaeyeon.jdrive.domain.user.dto.request.UserUpdateRequest;
 import io.jaeyeon.jdrive.domain.user.dto.response.TokenResponse;
+import io.jaeyeon.jdrive.domain.user.dto.response.UserResponse;
 import io.jaeyeon.jdrive.domain.user.repository.UserRepository;
 import io.jaeyeon.jdrive.global.error.ErrorCode;
 import io.jaeyeon.jdrive.global.error.exception.BusinessException;
@@ -35,13 +37,39 @@ public class UserService {
         }
     }
 
-    @Transactional
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         validatePassword(user, request.password());
         return createTokens(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse getMyInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        return UserResponse.from(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse updateMyInfo(Long userId, UserUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (request.name() != null) {
+            user.updateName(request.name());
+        }
+
+        if (request.hasPasswordUpdate()) {
+            user.updatePassword(
+                    request.currentPassword(),
+                    request.newPassword(),
+                    passwordEncoder);
+        }
+
+        return UserResponse.from(user);
     }
 
     private void validatePassword(User user, String rawPassword) {

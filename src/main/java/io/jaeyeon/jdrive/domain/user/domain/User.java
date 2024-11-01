@@ -1,6 +1,8 @@
 package io.jaeyeon.jdrive.domain.user.domain;
 
 import io.jaeyeon.jdrive.global.common.BaseTimeEntity;
+import io.jaeyeon.jdrive.global.error.ErrorCode;
+import io.jaeyeon.jdrive.global.error.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -49,5 +51,16 @@ public class User extends BaseTimeEntity {
 
     public boolean matchesPassword(String rawPassword, PasswordEncoder passwordEncoder) {
         return passwordEncoder.matches(rawPassword, this.password);
+    }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updatePassword(String currentPassword, String newPassword, PasswordEncoder passwordEncoder) {
+        if (!matchesPassword(currentPassword, passwordEncoder)) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+        }
+        this.password = passwordEncoder.encode(newPassword);
     }
 }
