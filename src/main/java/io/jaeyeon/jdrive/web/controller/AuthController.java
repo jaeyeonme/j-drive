@@ -1,5 +1,6 @@
 package io.jaeyeon.jdrive.web.controller;
 
+import io.jaeyeon.jdrive.domain.user.dto.request.LoginRequest;
 import io.jaeyeon.jdrive.domain.user.dto.request.SignupRequest;
 import io.jaeyeon.jdrive.domain.user.dto.response.TokenResponse;
 import io.jaeyeon.jdrive.domain.user.service.UserService;
@@ -21,5 +22,10 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<TokenResponse> signup(@Valid @RequestBody SignupRequest request) {
         return ResponseEntity.ok(userService.signup(request));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(userService.login(request));
     }
 }
